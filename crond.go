@@ -5,14 +5,14 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strings"
 
-	"github.com/yieldr/go-log/log"
-	"gopkg.in/robfig/cron.v2"
+	cron "gopkg.in/robfig/cron.v2"
 )
 
 func usage() {
@@ -30,21 +30,18 @@ func main() {
 func run(path string) {
 	files, err := filepath.Glob(path)
 	if err != nil {
-		log.Error(err)
-		os.Exit(128)
+		log.Fatalln(err)
 	}
 	c := new(Cron)
 	for _, file := range files {
 		f, err := os.Open(file)
 		if err != nil {
-			log.Error(err)
-			os.Exit(128)
+			log.Fatalln(err)
 		}
 		defer f.Close()
 		err = c.Read(f)
 		if err != nil {
-			log.Errorf("error in file %s %s\n", f.Name(), err)
-			os.Exit(128)
+			log.Fatalf("error in file %s %s\n", f.Name(), err)
 		}
 	}
 	c.Start()
@@ -102,12 +99,12 @@ func (c *Cron) ReadLine(s string) (int, error) {
 		} else {
 			cmd = exec.Command(argv[0])
 		}
-		log.Info(p[1])
+		log.Println(p[1])
 		cmd.Stdout = wrapLog(os.Stdout)
 		cmd.Stderr = wrapLog(os.Stderr)
 		err := cmd.Run()
 		if err != nil {
-			log.Error(err)
+			log.Printf("error: %s\n", err)
 		}
 	})
 	return int(id), err
@@ -118,19 +115,15 @@ func (c *Cron) Entry(id int) cron.Entry {
 }
 
 func wrapLog(w io.Writer) io.Writer {
-	return &logWriter{
-		log: log.New(log.WriterSink(w, log.BasicFormat, log.BasicFields)),
-	}
+	return &logWriter{log.New(w, "", log.LstdFlags)}
 }
 
-type logWriter struct {
-	log log.Logger
-}
+type logWriter struct{ log *log.Logger }
 
 func (l *logWriter) Write(p []byte) (int, error) {
 	for _, line := range bytes.Split(p, []byte{'\n'}) {
 		if len(line) > 0 {
-			l.log.Info(string(line))
+			l.log.Printf("> %s", line)
 		}
 	}
 	return len(p), nil
