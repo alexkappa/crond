@@ -1,0 +1,21 @@
+{
+	"ImportPath": "github.com/alexkappa/crond",
+	"GoVersion": "go1.5.2",
+	"Deps": [
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Comment": "v1.0-51-gf3960ab",
+			"Rev": "f3960ab1f9664ecc4e27c78af27cc9063d745a43"
+		},
+		{
+			"ImportPath": "github.com/yieldr/go-log/log",
+			"Comment": "v1.0.0-10-g0f7ebe0",
+			"Rev": "0f7ebe002799441a376f9c0f877f6978716608a2"
+		},
+		{
+			"ImportPath": "gopkg.in/robfig/cron.v2",
+			"Comment": "v1-11-gbe2e0b0",
+			"Rev": "be2e0b0deed5a68ffee390b4583a13aff8321535"
+		}
+	]
+}

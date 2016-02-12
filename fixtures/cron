@@ -1,0 +1,9 @@
+# COMMENT
+* * * * * echo "Every minute"
+*/10 * * * * echo "Every 10 minutes"
+0 * * * * echo "Every hour at minute 0"
+*/30 * * * * echo "Every half hour"
+0 */2 * * * echo "Every two hours at minute 0"
+@every 3s echo "Every 3 seconds using @every descriptor"
+@daily echo "Every day"
+@hourly echo "Every hour"
