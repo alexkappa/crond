@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -27,27 +28,34 @@ func main() {
 	run(os.Args[1])
 }
 
-func run(path string) {
-	files, err := filepath.Glob(path)
+func run(dir string) {
+	log.Println("crond started")
+	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	c := new(Cron)
 	for _, file := range files {
-		f, err := os.Open(file)
+		if file.IsDir() {
+			continue
+		}
+		f, err := os.Open(filepath.Join(dir, file.Name()))
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
+			continue
 		}
 		defer f.Close()
 		err = c.Read(f)
 		if err != nil {
-			log.Fatalf("error in file %s %s\n", f.Name(), err)
+			log.Printf("error in file %s %s\n", f.Name(), err)
+			continue
 		}
 	}
 	c.Start()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, os.Kill)
 	<-ch
+	log.Println("crond exiting")
 }
 
 type Cron struct{ cron.Cron }

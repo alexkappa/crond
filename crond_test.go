@@ -2,25 +2,11 @@ package main
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func TestGlob(t *testing.T) {
-	for path, expected := range map[string][]string{
-		"fixtures":      {"fixtures"},
-		"fixtures/":     {"fixtures/"},
-		"fixtures/*":    {"fixtures/cron"},
-		"fixtures/cron": {"fixtures/cron"},
-	} {
-		actual, err := filepath.Glob(path)
-		assert.NoError(t, err)
-		assert.EqualValues(t, expected, actual)
-	}
-}
 
 func TestCronRead(t *testing.T) {
 	f, err := os.Open("fixtures/cron")
