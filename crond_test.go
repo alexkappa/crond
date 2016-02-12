@@ -31,21 +31,20 @@ func TestCronRead(t *testing.T) {
 }
 
 func TestCronReadLine(t *testing.T) {
-	now := time.Date(2016, time.February, 1, 0, 0, 0, 0, time.UTC)
-	t.Log(now.Format(time.Kitchen))
 	c := new(Cron)
-	for cron, nextRun := range map[string]time.Time{
-		"* * * * * COMMAND":       now.Add(1 * time.Minute),
-		"*/10 * * * * COMMAND":    now.Add(10 * time.Minute),
-		"* */2 * * * COMMAND":     now.Add(1 * time.Hour),
-		"0 * * * * COMMAND":       now.Add(1 * time.Hour),
-		"0 */2 * * * COMMAND ARG": now.Add(1 * time.Hour),
-		"@daily COMMAND ARG":      now.Add(23 * time.Hour),
-		"@hourly COMMAND":         now.Add(1 * time.Hour),
+	for cron, expected := range map[string]time.Duration{
+		"* * * * * COMMAND":       1 * time.Minute,
+		"*/10 * * * * COMMAND":    10 * time.Minute,
+		"0 * * * * COMMAND":       1 * time.Hour,
+		"0 */2 * * * COMMAND ARG": 2 * time.Hour,
+		"0 0 */2 * * COMMAND":     2 * 24 * time.Hour,
+		"@daily COMMAND ARG":      24 * time.Hour,
+		"@hourly COMMAND":         1 * time.Hour,
 	} {
 		id, err := c.ReadLine(cron)
 		assert.NoError(t, err)
-		assert.Equal(t, nextRun, c.Entry(id).Schedule.Next(now))
-		t.Log(cron, nextRun.Format(time.Kitchen), c.Entry(id).Schedule.Next(now).Format(time.Kitchen))
+		run1 := c.Entry(id).Schedule.Next(time.Now())
+		run2 := c.Entry(id).Schedule.Next(run1)
+		assert.Equal(t, expected, run2.Sub(run1), cron)
 	}
 }
