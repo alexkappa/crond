@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/docker/docker/pkg/filenotify"
 	cron "gopkg.in/robfig/cron.v2"
@@ -30,8 +31,11 @@ func main() {
 }
 
 func run(dir string) {
-	sigint := make(chan os.Signal, 1)
+	sigint := make(chan os.Signal)
 	signal.Notify(sigint, os.Interrupt, os.Kill)
+
+	sighup := make(chan os.Signal)
+	signal.Notify(sighup, syscall.SIGHUP)
 
 	watcher, _ := filenotify.New()
 	err := watcher.Add(dir)
@@ -68,6 +72,9 @@ func run(dir string) {
 		case <-sigint:
 			log.Println("crond exiting")
 			return
+		case <-sighup:
+			log.Println("crond reloading")
+			continue
 		case <-watcher.Events():
 			log.Printf("crond detected changes in %s. reloading\n", dir)
 			continue
