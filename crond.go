@@ -76,17 +76,21 @@ func (c *Cron) Read(r io.Reader) error {
 
 func (c *Cron) ReadLine(s string) (int, error) {
 	var p []string
-	if strings.HasPrefix(s, "#") {
-		return -1, nil // ignore comments
-	} else if strings.HasPrefix(s, "@every") {
+	switch {
+	case strings.TrimSpace(s) == "" || strings.HasPrefix(s, "#"):
+		return -1, nil
+	case strings.HasPrefix(s, "@every"):
 		p = strings.SplitN(s, " ", 3)
+		if len(p) < 3 {
+			return -1, fmt.Errorf("malformed entry.")
+		}
 		p = []string{
 			strings.Join(p[0:2], " "),
 			strings.Join(p[2:], " "),
 		}
-	} else if strings.HasPrefix(s, "@") {
+	case strings.HasPrefix(s, "@"):
 		p = strings.SplitN(s, " ", 2)
-	} else {
+	default:
 		p = strings.Split(s, " ")
 		if len(p) < 5 {
 			return -1, fmt.Errorf("malformed entry.")

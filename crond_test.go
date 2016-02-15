@@ -26,11 +26,26 @@ func TestCronReadLine(t *testing.T) {
 		"0 0 */2 * * COMMAND":     2 * 24 * time.Hour,
 		"@daily COMMAND ARG":      24 * time.Hour,
 		"@hourly COMMAND":         1 * time.Hour,
+		"@every 1h COMMAND":       1 * time.Hour,
+		"@every 30s COMMAND":      30 * time.Second,
 	} {
 		id, err := c.ReadLine(cron)
 		assert.NoError(t, err)
 		run1 := c.Entry(id).Schedule.Next(time.Now())
 		run2 := c.Entry(id).Schedule.Next(run1)
 		assert.Equal(t, expected, run2.Sub(run1), cron)
+	}
+}
+
+func TestCronReadIgnoredLine(t *testing.T) {
+	c := new(Cron)
+	for _, cron := range []string{
+		"",
+		"    ",
+		"#",
+		"# comment",
+	} {
+		_, err := c.ReadLine(cron)
+		assert.NoError(t, err)
 	}
 }
