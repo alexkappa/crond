@@ -47,7 +47,7 @@ func run(dir string) {
 	for {
 		files, err := ioutil.ReadDir(dir)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalf("failed to open directory: %s\n", err)
 		}
 		c := new(Cron)
 		for _, file := range files {
@@ -57,7 +57,7 @@ func run(dir string) {
 			}
 			f, err := os.Open(filepath.Join(dir, file.Name()))
 			if err != nil {
-				log.Println(err)
+				log.Printf("failed to open file %s: %s", file.Name(), err)
 				continue
 			}
 			defer f.Close()
@@ -129,16 +129,10 @@ func (c *Cron) ReadLine(s string) (int, error) {
 		return -1, fmt.Errorf("malformed entry.")
 	}
 	id, err := c.AddFunc(p[0], func() {
-		argv := strings.Split(p[1], " ")
-		var cmd *exec.Cmd
-		if len(argv) > 1 {
-			cmd = exec.Command(argv[0], argv[1:]...)
-		} else {
-			cmd = exec.Command(argv[0])
-		}
-		log.Println(p[1])
+		cmd := exec.Command("sh", "-c", p[1])
 		cmd.Stdout = wrapLog(os.Stdout)
 		cmd.Stderr = wrapLog(os.Stderr)
+		log.Printf("running command %q", cmd.Args)
 		err := cmd.Run()
 		if err != nil {
 			log.Printf("error: %s\n", err)
