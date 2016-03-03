@@ -8,16 +8,6 @@
 			"Rev": "f7f79f729e0fbe2fcc061db48a9ba0263f588252"
 		},
 		{
-			"ImportPath": "github.com/docker/docker/pkg/filenotify",
-			"Comment": "v1.4.1-9645-g38424b7",
-			"Rev": "38424b73d91b8d5774115dee0e083c4d3957623c"
-		},
-		{
-			"ImportPath": "github.com/stretchr/testify/assert",
-			"Comment": "v1.0-51-gf3960ab",
-			"Rev": "f3960ab1f9664ecc4e27c78af27cc9063d745a43"
-		},
-		{
 			"ImportPath": "gopkg.in/fsnotify.v1",
 			"Comment": "v1.2.1",
 			"Rev": "7be54206639f256967dd82fa767397ba5f8f48f5"

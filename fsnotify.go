@@ -1,4 +1,9 @@
-package filenotify
+// Copyright 2013-2016 Docker, Inc. All rights reserved. Use of this source 
+// code is governed by the Apache License 2.0 that can be found at the projects
+// LICENCE file.
+// 
+// https://github.com/docker/docker/blob/master/LICENSE
+package main
 
 import "gopkg.in/fsnotify.v1"
 

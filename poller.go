@@ -1,4 +1,9 @@
-package filenotify
+// Copyright 2013-2016 Docker, Inc. All rights reserved. Use of this source 
+// code is governed by the Apache License 2.0 that can be found at the projects
+// LICENCE file.
+// 
+// https://github.com/docker/docker/blob/master/LICENSE
+package main
 
 import (
 	"errors"
@@ -20,11 +25,12 @@ var (
 // watchWaitTime is the time to wait between file poll loops
 const watchWaitTime = 200 * time.Millisecond
 
-// filePoller is used to poll files for changes, especially in cases where fsnotify
-// can't be run (e.g. when inotify handles are exhausted)
-// filePoller satisfies the FileWatcher interface
+// filePoller is used to poll files for changes, especially in cases where 
+// fsnotify can't be run (e.g. when inotify handles are exhausted) filePoller 
+// satisfies the FileWatcher interface.
 type filePoller struct {
-	// watches is the list of files currently being polled, close the associated channel to stop the watch
+	// watches is the list of files currently being polled, close the 
+    // associated channel to stop the watch.
 	watches map[string]chan struct{}
 	// events is the channel to listen to for watch events
 	events chan fsnotify.Event
@@ -36,8 +42,8 @@ type filePoller struct {
 	closed bool
 }
 
-// Add adds a filename to the list of watches
-// once added the file is polled for changes in a separate goroutine
+// Add adds a filename to the list of watches once added the file is polled for 
+// changes in a separate goroutine.
 func (w *filePoller) Add(name string) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -154,8 +160,10 @@ func (w *filePoller) watch(f *os.File, lastFi os.FileInfo, chClose chan struct{}
 
 		fi, err := os.Stat(f.Name())
 		if err != nil {
-			// if we got an error here and lastFi is not set, we can presume that nothing has changed
-			// This should be safe since before `watch()` is called, a stat is performed, there is any error `watch` is not called
+			// if we got an error here and lastFi is not set, we can presume 
+            // that nothing has changed. This should be safe since before 
+            // `watch()` is called, a stat is performed, there is any error 
+            // `watch` is not called.
 			if lastFi == nil {
 				continue
 			}

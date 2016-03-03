@@ -14,17 +14,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/docker/docker/pkg/filenotify"
 	cron "gopkg.in/robfig/cron.v2"
 )
 
-func usage() {
-	fmt.Printf("Usage: %s <path>\n", os.Args[0])
-}
-
 func main() {
 	if len(os.Args) < 2 {
-		usage()
+		fmt.Printf("Usage: %s <dir>\n", filepath.Base(os.Args[0]))
 		os.Exit(1)
 	}
 	run(os.Args[1])
@@ -37,8 +32,12 @@ func run(dir string) {
 	sighup := make(chan os.Signal)
 	signal.Notify(sighup, syscall.SIGHUP)
 
-	watcher, _ := filenotify.New()
-	err := watcher.Add(dir)
+	watcher, err := newFileWatcher()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	err = watcher.Add(dir)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -49,7 +48,7 @@ func run(dir string) {
 		if err != nil {
 			log.Fatalf("failed to open directory: %s\n", err)
 		}
-		c := new(Cron)
+		c := new(Crond)
 		for _, file := range files {
 			log.Printf("crond parsing file %s", filepath.Join(dir, file.Name()))
 			if file.IsDir() {
@@ -74,18 +73,18 @@ func run(dir string) {
 			return
 		case <-sighup:
 			log.Println("crond reloading")
-			continue
 		case <-watcher.Events():
 			log.Printf("crond detected changes in %s. reloading\n", dir)
-			continue
 		}
 		c.Stop()
 	}
 }
 
-type Cron struct{ cron.Cron }
+// Crond provides functionality for reading and parsing cron entries.
+type Crond struct{ cron.Cron }
 
-func (c *Cron) Read(r io.Reader) error {
+// Read reads and parses cron entries from a reader.
+func (c *Crond) Read(r io.Reader) error {
 	l := 1
 	s := bufio.NewScanner(r)
 	s.Split(bufio.ScanLines)
@@ -99,7 +98,8 @@ func (c *Cron) Read(r io.Reader) error {
 	return s.Err()
 }
 
-func (c *Cron) ReadLine(s string) (int, error) {
+// ReadLine reads and parses an individual entry from a string.
+func (c *Crond) ReadLine(s string) (int, error) {
 	var p []string
 	switch {
 	case strings.TrimSpace(s) == "" || strings.HasPrefix(s, "#"):
@@ -107,7 +107,7 @@ func (c *Cron) ReadLine(s string) (int, error) {
 	case strings.HasPrefix(s, "@every"):
 		p = strings.SplitN(s, " ", 3)
 		if len(p) < 3 {
-			return -1, fmt.Errorf("malformed entry.")
+			return -1, fmt.Errorf("malformed entry")
 		}
 		p = []string{
 			strings.Join(p[0:2], " "),
@@ -118,7 +118,7 @@ func (c *Cron) ReadLine(s string) (int, error) {
 	default:
 		p = strings.Split(s, " ")
 		if len(p) < 5 {
-			return -1, fmt.Errorf("malformed entry.")
+			return -1, fmt.Errorf("malformed entry")
 		}
 		p = []string{
 			strings.Join(p[0:5], " "),
@@ -126,7 +126,7 @@ func (c *Cron) ReadLine(s string) (int, error) {
 		}
 	}
 	if len(p) != 2 {
-		return -1, fmt.Errorf("malformed entry.")
+		return -1, fmt.Errorf("malformed entry")
 	}
 	id, err := c.AddFunc(p[0], func() {
 		cmd := exec.Command("sh", "-c", p[1])
@@ -141,7 +141,8 @@ func (c *Cron) ReadLine(s string) (int, error) {
 	return int(id), err
 }
 
-func (c *Cron) Entry(id int) cron.Entry {
+// Entry retrieves a cron entry by its id.
+func (c *Crond) Entry(id int) cron.Entry {
 	return c.Cron.Entry(cron.EntryID(id))
 }
 

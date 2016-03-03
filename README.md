@@ -4,6 +4,4 @@ Crond is an alternative cron implementation powered by the excellent [robfig/cro
 
 ## Usage
 
-	crond /etc/cron.d/*
-
-
+	crond /etc/cron.d

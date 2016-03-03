@@ -4,20 +4,20 @@ import (
 	"os"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCronRead(t *testing.T) {
 	f, err := os.Open("fixtures/cron")
-	assert.NoError(t, err)
-
-	c := new(Cron)
-	assert.NoError(t, c.Read(f))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := new(Crond)
+	if err = c.Read(f); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestCronReadLine(t *testing.T) {
-	c := new(Cron)
 	for cron, expected := range map[string]time.Duration{
 		"* * * * * COMMAND":       1 * time.Minute,
 		"*/10 * * * * COMMAND":    10 * time.Minute,
@@ -29,16 +29,25 @@ func TestCronReadLine(t *testing.T) {
 		"@every 1h COMMAND":       1 * time.Hour,
 		"@every 30s COMMAND":      30 * time.Second,
 	} {
+		c := new(Crond)
 		id, err := c.ReadLine(cron)
-		assert.NoError(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		run1 := c.Entry(id).Schedule.Next(time.Now())
 		run2 := c.Entry(id).Schedule.Next(run1)
-		assert.Equal(t, expected, run2.Sub(run1), cron)
+
+		actual := run2.Sub(run1)
+
+		if expected != actual {
+			t.Errorf("Failed asserting that %v equals %v", expected, actual)
+		}
 	}
 }
 
 func TestCronReadIgnoredLine(t *testing.T) {
-	c := new(Cron)
+	c := new(Crond)
 	for _, cron := range []string{
 		"",
 		"    ",
@@ -46,6 +55,8 @@ func TestCronReadIgnoredLine(t *testing.T) {
 		"# comment",
 	} {
 		_, err := c.ReadLine(cron)
-		assert.NoError(t, err)
+		if err != nil {
+			t.Error(err)
+		}
 	}
 }
