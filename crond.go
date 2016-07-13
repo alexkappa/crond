@@ -17,6 +17,8 @@ import (
 	cron "gopkg.in/robfig/cron.v2"
 )
 
+var Version string
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Printf("Usage: %s <dir>\n", filepath.Base(os.Args[0]))
@@ -99,43 +101,76 @@ func (c *Crond) Read(r io.Reader) error {
 }
 
 // ReadLine reads and parses an individual entry from a string.
-func (c *Crond) ReadLine(s string) (int, error) {
-	var p []string
+func (c *Crond) ReadLine(line string) (int, error) {
+	// We'll split each line on spaces and try to identify which part is the
+	// schedule and which is the command.
+	var parts []string
+
 	switch {
-	case strings.TrimSpace(s) == "" || strings.HasPrefix(s, "#"):
+	// Empty lines or lines that start with a pound (#) are treated as comments
+	// and therefore are ignored.
+	//
+	// 	# This line is ignored.
+	case strings.TrimSpace(line) == "" || strings.HasPrefix(line, "#"):
 		return -1, nil
-	case strings.HasPrefix(s, "@every"):
-		p = strings.SplitN(s, " ", 3)
-		if len(p) < 3 {
+	// The duration expression is used to schedule jobs to execute at fixed
+	// intervals.
+	//
+	// 	@every 3m <command>
+	case strings.HasPrefix(line, "@every"):
+		parts = strings.SplitN(line, " ", 3)
+		if len(parts) < 3 {
 			return -1, fmt.Errorf("malformed entry")
 		}
-		p = []string{
-			strings.Join(p[0:2], " "),
-			strings.Join(p[2:], " "),
+		parts = []string{
+			strings.Join(parts[0:2], " "),
+			strings.Join(parts[2:], " "),
 		}
-	case strings.HasPrefix(s, "@"):
-		p = strings.SplitN(s, " ", 2)
+	// The predefined schedules are used to schedule jobs using some common cron
+	// expressions.
+	//
+	// 	@monthly <command>
+	case strings.HasPrefix(line, "@"):
+		parts = strings.SplitN(line, " ", 2)
+	// The cron expression format represents a set of times, using 5
+	// space-separated fields.
+	//
+	// 	0 0 * * * <command>
 	default:
-		p = strings.Split(s, " ")
-		if len(p) < 5 {
+		parts = strings.Split(line, " ")
+		if len(parts) < 5 {
 			return -1, fmt.Errorf("malformed entry")
 		}
-		p = []string{
-			strings.Join(p[0:5], " "),
-			strings.Join(p[5:], " "),
+		parts = []string{
+			strings.Join(parts[0:5], " "),
+			strings.Join(parts[5:], " "),
 		}
 	}
-	if len(p) != 2 {
+	if len(parts) != 2 {
 		return -1, fmt.Errorf("malformed entry")
 	}
-	id, err := c.AddFunc(p[0], func() {
-		cmd := exec.Command("sh", "-c", p[1])
+	id, err := c.AddFunc(parts[0], func() {
+		cmd := exec.Command("sh", "-c", parts[1])
 		cmd.Stdout = wrapLog(os.Stdout)
 		cmd.Stderr = wrapLog(os.Stderr)
 		log.Printf("running command %q", cmd.Args)
 		err := cmd.Run()
 		if err != nil {
 			log.Printf("error: %s\n", err)
+		}
+		// If the command is followed by a comment matching a particular pattern
+		// it is assumed to be an annotation related to health checking.
+		//
+		// The value of the annotation is extracted and used to ping the health
+		// check service.
+		//
+		// 	@every <duration> <command> # hc:<check>
+		hc := newHealthCheck()
+		if hc.HasAnnotation(parts[1]) {
+			id := hc.FromAnnotation(parts[1])
+			if err = hc.Ping(id); err != nil {
+				log.Printf("error: %s\n", err)
+			}
 		}
 	})
 	return int(id), err
