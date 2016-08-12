@@ -2,13 +2,11 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strings"
@@ -101,7 +99,7 @@ func (c *Crond) Read(r io.Reader) error {
 }
 
 // ReadLine reads and parses an individual entry from a string.
-func (c *Crond) ReadLine(line string) (int, error) {
+func (c *Crond) ReadLine(line string) (cron.EntryID, error) {
 	// We'll split each line on spaces and try to identify which part is the
 	// schedule and which is the command.
 	var parts []string
@@ -139,59 +137,17 @@ func (c *Crond) ReadLine(line string) (int, error) {
 	default:
 		parts = strings.Split(line, " ")
 		if len(parts) < 5 {
-			return -1, fmt.Errorf("malformed entry")
+			return 0, fmt.Errorf("malformed entry")
 		}
 		parts = []string{
 			strings.Join(parts[0:5], " "),
 			strings.Join(parts[5:], " "),
 		}
 	}
+
 	if len(parts) != 2 {
-		return -1, fmt.Errorf("malformed entry")
+		return 0, fmt.Errorf("malformed entry")
 	}
-	id, err := c.AddFunc(parts[0], func() {
-		cmd := exec.Command("sh", "-c", parts[1])
-		cmd.Stdout = wrapLog(os.Stdout)
-		cmd.Stderr = wrapLog(os.Stderr)
-		log.Printf("running command %q", cmd.Args)
-		err := cmd.Run()
-		if err != nil {
-			log.Printf("error: %s\n", err)
-		}
-		// If the command is followed by a comment matching a particular pattern
-		// it is assumed to be an annotation related to health checking.
-		//
-		// The value of the annotation is extracted and used to ping the health
-		// check service.
-		//
-		// 	@every <duration> <command> # hc:<check>
-		hc := newHealthCheck()
-		if hc.HasAnnotation(parts[1]) {
-			id := hc.FromAnnotation(parts[1])
-			if err = hc.Ping(id); err != nil {
-				log.Printf("error: %s\n", err)
-			}
-		}
-	})
-	return int(id), err
-}
 
-// Entry retrieves a cron entry by its id.
-func (c *Crond) Entry(id int) cron.Entry {
-	return c.Cron.Entry(cron.EntryID(id))
-}
-
-func wrapLog(w io.Writer) io.Writer {
-	return &logWriter{log.New(w, "", log.LstdFlags)}
-}
-
-type logWriter struct{ log *log.Logger }
-
-func (l *logWriter) Write(p []byte) (int, error) {
-	for _, line := range bytes.Split(p, []byte{'\n'}) {
-		if len(line) > 0 {
-			l.log.Printf("> %s", line)
-		}
-	}
-	return len(p), nil
+	return c.AddJob(parts[0], newJob(parts[1]))
 }
