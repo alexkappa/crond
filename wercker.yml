@@ -26,6 +26,10 @@ release:
         code: |
           export VERSION=$(/usr/bin/crond -v)
 
+    - wercker/github-create-release@1.0.1:
+        token: $GITHUB_TOKEN
+        tag: $VERSION
+
     - wercker/github-upload-asset@1.0.1:
         token: $GITHUB_TOKEN
         file: crond-linux-amd64
@@ -35,7 +39,3 @@ release:
         token: $GITHUB_TOKEN
         file: crond-darwin-amd64
         content-type: application/octet-stream
-
-    - wercker/github-create-release@1.0.1:
-        token: $GITHUB_TOKEN
-        tag: $VERSION
