@@ -15,7 +15,6 @@ build:
         name: copy binaries
         code: |
           cp bin/crond-linux-amd64 $WERCKER_OUTPUT_DIR/crond
-          cp VERSION $WERCKER_OUTPUT_DIR/crond-version
 release:
   box: debian
   steps:
@@ -26,7 +25,7 @@ release:
     - script:
         name: get version
         code: |
-          export VERSION=$(cat /usr/bin/crond-version)
+          export VERSION=$(cat /usr/bin/crond -v)
     - wercker/github-create-release@1.0.1:
         token: $GITHUB_TOKEN
         tag: $VERSION

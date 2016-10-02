@@ -22,6 +22,10 @@ func main() {
 		fmt.Printf("Usage: %s <dir>\n", filepath.Base(os.Args[0]))
 		os.Exit(1)
 	}
+	if os.Args[1] == "-v" {
+		fmt.Printf("%s\n", Version)
+		os.Exit(0)
+	}
 	run(os.Args[1])
 }
 
