@@ -29,10 +29,12 @@ release:
     - wercker/github-upload-asset@1.0.1:
         token: $GITHUB_TOKEN
         file: crond-linux-amd64
+        content-type: application/octet-stream
 
     - wercker/github-upload-asset@1.0.1:
         token: $GITHUB_TOKEN
         file: crond-darwin-amd64
+        content-type: application/octet-stream
 
     - wercker/github-create-release@1.0.1:
         token: $GITHUB_TOKEN
