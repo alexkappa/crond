@@ -12,7 +12,8 @@ build:
     - script:
         name: build
         code: |
-          make OS=linux ARCH=amd64
+          make OS=linux
+          make OS=darwin
 
     - script:
         name: copy binaries
@@ -27,11 +28,11 @@ release:
 
     - wercker/github-upload-asset@1.0.1:
         token: $GITHUB_TOKEN
-        file: crond-darwin-amd64
+        file: crond-linux-amd64
 
     - wercker/github-upload-asset@1.0.1:
         token: $GITHUB_TOKEN
-        file: crond-linux-amd64
+        file: crond-darwin-amd64
 
     - wercker/github-create-release@1.0.1:
         token: $GITHUB_TOKEN
