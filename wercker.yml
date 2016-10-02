@@ -16,6 +16,7 @@ build:
         code: |
           cp bin/crond-linux-amd64 $WERCKER_OUTPUT_DIR/crond
 release:
+  box: debian
   steps:
     - script:
         name: copy binaries
@@ -25,6 +26,22 @@ release:
         name: get version
         code: |
           export VERSION=$(/usr/bin/crond -v)
+    - internal/docker-push:
+        username: $DOCKER_USERNAME
+        password: $DOCKER_PASSWORD
+        repository: alexkappa/crond
+        tag: $VERSION
+    - script:
+        name: get version
+        code: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl
     - wercker/github-create-release@1.0.1:
         token: $GITHUB_TOKEN
         tag: $VERSION
+        body: |
+          You can find the latest release at [hub.docker.com](https://hub.docker.com/r/alexkappa/crond/tags/).
+
+          ```
+          docker pull alexkappa/crond:$VERSION
+          ```
