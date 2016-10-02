@@ -17,33 +17,22 @@ build:
     - script:
         name: copy binaries
         code: |
-          cp bin/crond-linux-amd64 $WERCKER_OUTPUT_DIR/crond
+          cp bin/* $WERCKER_OUTPUT_DIR
 release:
-  box: yieldr/debian
   steps:
-    - script:
-        name: copy binaries
-        code: |
-          cp $WERCKER_SOURCE_DIR/* /usr/bin
-
     - script:
         name: get version
         code: |
           export VERSION=$(/usr/bin/crond -v)
 
-    - internal/docker-scratch-push:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
-        repository: alexkappa/crond
-        cmd: /usr/bin/crond /etc/cron.d
-        tag: latest
+    - wercker/github-upload-asset@1.0.1:
+        token: $GITHUB_TOKEN
+        file: crond-darwin-amd64
+
+    - wercker/github-upload-asset@1.0.1:
+        token: $GITHUB_TOKEN
+        file: crond-linux-amd64
 
     - wercker/github-create-release@1.0.1:
         token: $GITHUB_TOKEN
         tag: $VERSION
-        body: |
-          You can find the latest release at [hub.docker.com](https://hub.docker.com/r/alexkappa/crond/tags/).
-
-          ```
-          docker pull alexkappa/crond:$VERSION
-          ```
