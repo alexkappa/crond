@@ -31,11 +31,11 @@ release:
         code: |
           export VERSION=$(/usr/bin/crond -v)
 
-    - internal/docker-push:
+    - internal/docker-scratch-push:
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
         repository: alexkappa/crond
-        cmd: crond /etc/cron.d
+        cmd: /usr/bin/crond /etc/cron.d
         tag: latest
 
     - wercker/github-create-release@1.0.1:
