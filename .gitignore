@@ -25,3 +25,5 @@ _testmain.go
 
 # Binary files
 bin/*
+
+.wercker

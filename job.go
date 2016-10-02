@@ -8,6 +8,14 @@ import (
 	"os/exec"
 )
 
+var (
+	// Stdout specifies where job stdout is written
+	Stdout io.Writer = os.Stdout
+
+	// Stderr specifies where job stderr is written
+	Stderr io.Writer = os.Stderr
+)
+
 type job struct {
 	cmd string
 	hc  *healthCheck
@@ -15,8 +23,8 @@ type job struct {
 
 func (j *job) Run() {
 	cmd := exec.Command("sh", "-c", j.cmd)
-	cmd.Stdout = wrapLog(os.Stdout)
-	cmd.Stderr = wrapLog(os.Stderr)
+	cmd.Stdout = wrapLog(Stdout)
+	cmd.Stderr = wrapLog(Stderr)
 
 	log.Printf("running command %q", cmd.Args)
 	err := cmd.Run()
