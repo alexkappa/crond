@@ -35,8 +35,8 @@ release:
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
         repository: alexkappa/crond
-        tag: $VERSION
         cmd: crond /etc/cron.d
+        tag: latest
 
     - wercker/github-create-release@1.0.1:
         token: $GITHUB_TOKEN
