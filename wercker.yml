@@ -31,16 +31,10 @@ release:
         code: |
           export VERSION=$(/usr/bin/crond -v)
 
-    - script:
-        name: env
-        code: |
-          env
-
     - internal/docker-push:
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
         repository: alexkappa/crond
-        registry: https://index.docker.io/v1/
         tag: $VERSION
         cmd: crond /etc/cron.d
 
