@@ -3,14 +3,17 @@ build:
   steps:
     - wercker/setup-go-workspace:
         package-dir: github.com/alexkappa/crond
+
     - script:
         name: test
         code: |
           go test
+
     - script:
         name: build
         code: |
           make OS=linux ARCH=amd64
+
     - script:
         name: copy binaries
         code: |
@@ -22,20 +25,26 @@ release:
         name: copy binaries
         code: |
           cp $WERCKER_SOURCE_DIR/* /usr/bin
+
     - script:
         name: get version
         code: |
           export VERSION=$(/usr/bin/crond -v)
+
     - internal/docker-push:
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
         repository: alexkappa/crond
         tag: $VERSION
+        cmd: crond /etc/cron.d
+        registry: https://index.docker.io/
+
     - script:
         name: get version
         code: |
           apt-get update
           apt-get install -y --no-install-recommends ca-certificates curl
+
     - wercker/github-create-release@1.0.1:
         token: $GITHUB_TOKEN
         tag: $VERSION
