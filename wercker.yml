@@ -19,7 +19,7 @@ build:
         code: |
           cp bin/crond-linux-amd64 $WERCKER_OUTPUT_DIR/crond
 release:
-  box: debian
+  box: yieldr/debian
   steps:
     - script:
         name: copy binaries
@@ -31,19 +31,18 @@ release:
         code: |
           export VERSION=$(/usr/bin/crond -v)
 
+    - script:
+        name: env
+        code: |
+          env
+
     - internal/docker-push:
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
         repository: alexkappa/crond
+        registry: https://index.docker.io/v1/
         tag: $VERSION
         cmd: crond /etc/cron.d
-        registry: https://index.docker.io/
-
-    - script:
-        name: get version
-        code: |
-          apt-get update
-          apt-get install -y --no-install-recommends ca-certificates curl
 
     - wercker/github-create-release@1.0.1:
         token: $GITHUB_TOKEN
