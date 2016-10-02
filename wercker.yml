@@ -4,10 +4,29 @@ build:
     - wercker/setup-go-workspace:
         package-dir: github.com/alexkappa/crond
     - script:
-        name: go build
-        code: |
-          go build
-    - script:
-        name: go test
+        name: test
         code: |
           go test
+    - script:
+        name: build
+        code: |
+          make OS=linux ARCH=amd64
+    - script:
+        name: copy binaries
+        code: |
+          cp bin/crond-linux-amd64 $WERCKER_OUTPUT_DIR/crond
+          cp VERSION $WERCKER_OUTPUT_DIR/crond-version
+release:
+  box: debian
+  steps:
+    - script:
+        name: copy binaries
+        code: |
+          cp $WERCKER_SOURCE_DIR/* /usr/bin
+    - script:
+        name: get version
+        code: |
+          export VERSION=$(cat /usr/bin/crond-version)
+    - wercker/github-create-release@1.0.1:
+        token: $GITHUB_TOKEN
+        tag: $VERSION
