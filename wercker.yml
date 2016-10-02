@@ -16,7 +16,6 @@ build:
         code: |
           cp bin/crond-linux-amd64 $WERCKER_OUTPUT_DIR/crond
 release:
-  box: debian
   steps:
     - script:
         name: copy binaries
